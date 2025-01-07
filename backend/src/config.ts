@@ -1,0 +1,1 @@
+export const JWT_PASS = "test@123";
