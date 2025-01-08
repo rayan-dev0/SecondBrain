@@ -110,22 +110,47 @@ app.delete("/api/v1/content", userMiddleware, async (req, res) => {
     });
   }
 });
-app.post("/api/v1/brain/share", userMiddleware, (req, res) => {
+app.post("/api/v1/brain/share", userMiddleware, async (req, res) => {
   const { share } = req.body;
   if (share) {
-    const hash = random(10)
-    LinkModel.create({
-      //@ts-ignore
-      userId: req.userId,
-      hash:hash
-    });
-  } else {
-    LinkModel.deleteOne({
-      //@ts-ignore
-      userId: req.userId,
-    });
-  }
+    try {
+      const exisitngLink = await LinkModel.findOne({
+        //@ts-ignore
+        userId:req.userId
+      })
 
+      if(exisitngLink){
+        res.status(200).json({
+          hash: exisitngLink.hash,
+        });
+        return
+      }
+
+      const hash = random(10);
+      await LinkModel.create({
+        //@ts-ignore
+        userId: req.userId,
+        hash: hash,
+      });
+
+      res.status(200).json({
+        msg: "Update to Shareable",
+        link: "/api/v1/brain/" + hash,
+      });
+    } catch (e) {
+      res.status(403).json({
+        error:e
+      })
+    }
+  } else {
+    await LinkModel.deleteOne({
+      //@ts-ignore
+      userId: req.userId,
+    })
+    res.json({
+      msg:"Removed Link "
+    })
+  }
 });
 app.get("/api/v1/brain/:shareLink", async (req, res) => {
   const hash = req.params.shareLink;
@@ -144,7 +169,7 @@ app.get("/api/v1/brain/:shareLink", async (req, res) => {
     userId: link.userId,
   });
   const user = await UserModel.findOne({
-    userId: link.userId,
+    _id: link.userId
   });
 
   if (!user) {
