@@ -1,7 +1,42 @@
+import { MouseEventHandler, useRef, useState } from "react";
 import { CrossIcon } from "../icons/CrossIcon";
 import { Button } from "./Button";
+import { Input } from "./Input";
+import axios from "axios";
+import { BACKEND_URL } from "../config";
 
-export function CreateContentModal({ open, onClose }) {
+interface ModalProps {
+  open: boolean;
+  onClose: MouseEventHandler;
+}
+enum ContentType {
+  Youtube = "youtube",
+  Twitter = "twitter",
+}
+
+export function CreateContentModal({ open, onClose }: ModalProps) {
+  const titleRef = useRef<HTMLInputElement>();
+  const linkRef = useRef<HTMLInputElement>();
+  const [type, setType] = useState(ContentType.Youtube);
+  async function addContent() {
+    const title = titleRef.current?.value;
+    const link = linkRef.current?.value;
+
+    await axios.post(
+      `${BACKEND_URL}/api/v1/content`,
+      {
+        link,
+        title,
+        type,
+      },
+      {
+        headers: {
+          Authorization: localStorage.getItem("token"),
+        },
+      }
+    );
+    // onClose();
+  }
   return (
     <div>
       {open && (
@@ -15,35 +50,49 @@ export function CreateContentModal({ open, onClose }) {
                 <CrossIcon />
               </div>
               <div>
-                <Input placeholder="Title"></Input>
-                <Input placeholder="Link"></Input>
+                <Input
+                  referance={titleRef}
+                  type="text"
+                  placeholder="Title"
+                ></Input>
+                <Input
+                  referance={linkRef}
+                  type="text"
+                  placeholder="Link"
+                ></Input>
+              </div>
+              <div>
+                <p className="font-semibold flex justify-center text-lg">
+                  Type :
+                </p>
+              </div>
+              <div className="flex justify-center gap-2 py-2">
+                <Button
+                  onClick={() => setType(ContentType.Youtube)}
+                  text="Youtube"
+                  variant={
+                    type === ContentType.Youtube ? "primary" : "secondary"
+                  }
+                ></Button>
+                <Button
+                  onClick={() => setType(ContentType.Twitter)}
+                  text="Twitter"
+                  variant={
+                    type === ContentType.Twitter ? "primary" : "secondary"
+                  }
+                ></Button>
               </div>
               <div className="flex justify-center">
-                <Button variant="primary" text="Submit"></Button>
+                <Button
+                  onClick={addContent}
+                  variant="primary"
+                  text="Submit"
+                ></Button>
               </div>
             </span>
           </div>
         </div>
       )}
-    </div>
-  );
-}
-
-function Input({
-  onChange,
-  placeholder,
-}: {
-  onChange?: () => void;
-  placeholder?: string;
-}) {
-  return (
-    <div>
-      <input
-        placeholder={placeholder}
-        type={"text"}
-        className="px-4 py-2 rounded-md border-2 shadow-inner outline-none focus:border-black m-2"
-        onChange={onChange}
-      />
     </div>
   );
 }

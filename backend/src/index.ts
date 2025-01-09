@@ -6,9 +6,11 @@ import { ContentModel, LinkModel, UserModel } from "./db";
 import { JWT_PASS } from "./config";
 import { userMiddleware } from "./middleware";
 import { random } from "./utils";
+import cors from "cors"
 
 const app = express();
 app.use(express.json());
+app.use(cors());
 const PORT = process.env.PORT;
 
 app.post("/api/v1/signup", async (req, res) => {
@@ -116,14 +118,14 @@ app.post("/api/v1/brain/share", userMiddleware, async (req, res) => {
     try {
       const exisitngLink = await LinkModel.findOne({
         //@ts-ignore
-        userId:req.userId
-      })
+        userId: req.userId,
+      });
 
-      if(exisitngLink){
+      if (exisitngLink) {
         res.status(200).json({
           hash: exisitngLink.hash,
         });
-        return
+        return;
       }
 
       const hash = random(10);
@@ -139,17 +141,17 @@ app.post("/api/v1/brain/share", userMiddleware, async (req, res) => {
       });
     } catch (e) {
       res.status(403).json({
-        error:e
-      })
+        error: e,
+      });
     }
   } else {
     await LinkModel.deleteOne({
       //@ts-ignore
       userId: req.userId,
-    })
+    });
     res.json({
-      msg:"Removed Link "
-    })
+      msg: "Removed Link ",
+    });
   }
 });
 app.get("/api/v1/brain/:shareLink", async (req, res) => {
@@ -169,7 +171,7 @@ app.get("/api/v1/brain/:shareLink", async (req, res) => {
     userId: link.userId,
   });
   const user = await UserModel.findOne({
-    _id: link.userId
+    _id: link.userId,
   });
 
   if (!user) {
